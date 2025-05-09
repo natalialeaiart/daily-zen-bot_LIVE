@@ -1,68 +1,30 @@
 import os
-from openai import OpenAI
+import requests
+from bs4 import BeautifulSoup
 from telegram import Bot
-from telegram.constants import ParseMode
 
-openai_key = os.getenv("OPENAI_API_KEY")
+# Получаем токен
 telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
-
-client = OpenAI(api_key=openai_key)
-
-# Генерация цитаты
-try:
-    chat_response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Ты генератор вдохновляющих, мудрых или юмористических цитат известных личностей. "
-                    "Цитата должна быть от реально существующего человека (писатель, философ, актёр, спортсмен, политик). "
-                    "Укажи имя автора. Переведи на английский. Не используй слова 'Russian' или 'English'."
-                )
-            },
-            {
-                "role": "user",
-                "content": "Сгенерируй вдохновляющую цитату с автором на русском и английском языках."
-            }
-        ]
-    )
-    quote_text = chat_response.choices[0].message.content.strip()
-    print("✅ Цитата сгенерирована.")
-except Exception as e:
-    print("❌ Ошибка генерации цитаты:", e)
-    quote_text = "Не удалось сгенерировать цитату."
-
-# Генерация изображения
-try:
-    image_response = client.images.generate(
-        model="dall-e-3",
-        prompt=f"Нарисуй красивую вдохновляющую сцену, подходящую по смыслу к цитате: {quote_text}",
-        size="1024x1024",
-        quality="standard",
-        n=1
-    )
-    image_url = image_response.data[0].url
-    print("✅ Картинка сгенерирована.")
-except Exception as e:
-    print("❌ Ошибка генерации изображения:", e)
-    image_url = None
-
-# Отправка в Telegram
-bot = Bot(token=telegram_token)
 chat_id = "@dailyzendose"  # Публичный канал
 
+# Парсим одну цитату с сайта
 try:
-    if image_url:
-        bot.send_photo(chat_id=chat_id, photo=image_url)
-    else:
-        bot.send_message(chat_id=chat_id, text="(Изображение не сгенерировано)")
+    url = "https://www.championat.com/lifestyle/article-5100445-50-motiviruyuschih-i-vdohnovlyayuschih-citat-na-kazhdyj-den.html"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-    bot.send_message(
-        chat_id=chat_id,
-        text=f"<b>Цитата дня:</b>\n\n{quote_text}",
-        parse_mode=ParseMode.HTML
-    )
-    print("✅ Сообщения отправлены.")
+    # Ищем первый абзац с цитатой
+    quotes = soup.find_all("li")
+    quote_text = quotes[0].get_text(strip=True) if quotes else "Не удалось найти цитату."
+    print("✅ Цитата получена:", quote_text)
+except Exception as e:
+    print("❌ Ошибка парсинга сайта:", e)
+    quote_text = "Не удалось получить цитату."
+
+# Отправка в Telegram
+try:
+    bot = Bot(token=telegram_token)
+    bot.send_message(chat_id=chat_id, text=f"Цитата дня:\n\n{quote_text}")
+    print("✅ Сообщение отправлено в Telegram.")
 except Exception as e:
     print("❌ Ошибка отправки в Telegram:", e)
