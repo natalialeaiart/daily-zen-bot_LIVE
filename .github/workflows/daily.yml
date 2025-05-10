@@ -2,7 +2,7 @@ name: Post Daily Zen Quote
 
 on:
   schedule:
-    - cron: '0 8 * * *' # каждый день в 8:00 UTC (11:00 по Москве)
+    - cron: '0 5 * * *' # 08:00 по Риге
   workflow_dispatch:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  # всегда актуальная стабильная версия
+          python-version: '3.10'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
