@@ -2,12 +2,16 @@ import os
 import telegram
 from openai import OpenAI
 
-# Инициализация
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-bot = telegram.Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
+# Настройки
+openai_api_key = os.getenv("OPENAI_API_KEY")
+telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = "@dailyzendose"
 
-# 1. Генерация цитаты (английский + перевод)
+# Подключение
+client = OpenAI(api_key=openai_api_key)
+bot = telegram.Bot(token=telegram_token)
+
+# Запрос цитаты
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[
@@ -16,37 +20,44 @@ response = client.chat.completions.create(
             "content": (
                 "Сгенерируй одну мудрую цитату дня на английском языке. "
                 "Это должна быть реальная цитата от известного человека, философа, автора книги или персонажа фильма. "
-                "Укажи автора цитаты или источник. Затем переведи её на русский язык."
+                "Укажи автора. Затем переведи эту цитату на русский язык."
             )
         }
     ]
 )
-quote = response.choices[0].message.content.strip()
 
-# 2. Извлечь тему для изображения через GPT
+# Обработка
+text = response.choices[0].message.content.strip()
+lines = [line.strip() for line in text.split("\n") if line.strip()]
+english = lines[0] if len(lines) > 0 else ""
+russian = lines[1] if len(lines) > 1 else ""
+
+# Финальный caption
+quote_caption = f"Quote of the day:\n\n{english}\n\nЦитата дня:\n\n{russian}"
+
+# Извлечение темы (по английской цитате)
 theme_response = client.chat.completions.create(
     model="gpt-4o",
     messages=[
         {
             "role": "user",
             "content": (
-                f"Вот цитата:\n\n{quote}\n\n"
-                "Определи ключевую тему или смысл этой цитаты одним-двумя словами (например: courage, creativity, balance, time, love). "
-                "Верни только английское слово или короткую фразу без пояснений."
+                f"Выдели главную тему этой цитаты одним словом или короткой фразой:\n\n{english}\n\n"
+                "Ответь только на английском, без пояснений."
             )
         }
     ]
 )
 theme = theme_response.choices[0].message.content.strip()
 
-# 3. Генерация изображения по теме
+# Генерация картинки
 image = client.images.generate(
     model="dall-e-3",
-    prompt=f"Conceptual illustration of {theme}, minimal style, peaceful and inspiring",
+    prompt=f"Conceptual illustration of {theme}, minimalist style, calming colors",
     n=1,
     size="1024x1024"
 )
 image_url = image.data[0].url
 
-# 4. Отправка в Telegram
-bot.send_photo(chat_id=chat_id, photo=image_url, caption=quote)
+# Отправка
+bot.send_photo(chat_id=chat_id, photo=image_url, caption=quote_caption)
