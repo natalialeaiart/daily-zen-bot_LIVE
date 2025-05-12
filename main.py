@@ -49,7 +49,7 @@ theme = theme_response.choices[0].message.content.strip()
 # 5. Генерация изображения
 image = client.images.generate(
     model="dall-e-3",
-    prompt=f"Symbolic concept of {theme}, elegant, minimalist, inspiring style",
+    prompt=f"Symbolic concept of {theme}, artistic rendering, elegant, high detail, blend of vintage and cybernetic aesthetics",
     n=1,
     size="1024x1024"
 )
