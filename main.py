@@ -157,7 +157,7 @@ else:
         print(f"Попытка отправки песни с индексом {next_index}: {song_url}")
         bot.send_message(
             chat_id=chat_id,
-            text=f"✨ Песня дня ✨\n\n{song_url}"
+            text=f"Song Of The Day - Песня Дня 🎧🌟\n\n{song_url}"
         )
         print(f"'Песня дня' с индексом {next_index} отправлена успешно.")
 
