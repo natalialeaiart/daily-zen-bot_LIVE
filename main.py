@@ -119,7 +119,7 @@ try:
         model="dall-e-3",
         prompt=f"Symbolic concept of {theme}, artistic rendering, elegant, high detail, blend of vintage and cybernetic aesthetics",
         n=1,
-        size="1024x1024"
+        size="1024x1792"
     )
     image_url = image.data[0].url
     print(f"Изображение сгенерировано. URL: {image_url}")
