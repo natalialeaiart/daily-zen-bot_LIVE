@@ -8,11 +8,13 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions: # <-- Добавьте этот блок
+      contents: write # <-- Явно даем права на запись в репозиторий
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        # Важно: Добавляем токен GITHUB_TOKEN для разрешения будущих операций git push
+        # Важно: Токен все еще нужен для actions/checkout, чтобы он склонировал репозиторий с нужными правами
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
