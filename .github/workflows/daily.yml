@@ -1,20 +1,25 @@
-name: Post Daily Zen Quote
+name: Post Daily Zen Quote and Song
 
 on:
   schedule:
-    - cron: '0 5 * * *' # 08:00 по Риге
-  workflow_dispatch:
+    - cron: '0 5 * * *' # 08:00 по Риге (GMT+3) = 05:00 UTC
+  workflow_dispatch: # Позволяет запускать вручную из интерфейса GitHub Actions
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        # Важно: Добавляем токен GITHUB_TOKEN для разрешения будущих операций git push
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10' # Убедитесь, что это ваша версия Python
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -24,3 +29,18 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: python main.py
+
+      # --- Шаги для сохранения индекса песни ---
+      # Эти шаги выполняются после основного скрипта бота
+      - name: Commit and push index file
+        # Этот шаг выполняется, только если файл current_song_index.txt существует
+        # и workflow не завершился ошибкой до этого момента
+        if: success() && steps.run.outcome == 'success' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add current_song_index.txt
+          # Проверяем, есть ли изменения перед коммитом, чтобы избежать пустых коммитов
+          git diff-index --quiet HEAD || git commit -m "Bot: Update song index"
+          # Отправляем изменения обратно в репозиторий
+          git push
