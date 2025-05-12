@@ -16,6 +16,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # --- Шаг для отладки файла индекса после checkout ---
+      # Этот шаг поможет проверить, что файл считывается корректно после клонирования репозитория
+      - name: Debug index file after checkout
+        run: |
+          echo "--- Debug: Contents of current_song_index.txt after checkout ---"
+          # Используем -f, чтобы не выводить ошибку, если файл не существует
+          cat -f current_song_index.txt || echo "File does does not exist or is empty or cannot be read."
+          echo "--- End Debug ---"
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -25,22 +34,33 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run bot
+        id: run_bot_step # Добавляем ID шагу Run bot для использования в if условии ниже
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: python main.py
 
       # --- Шаги для сохранения индекса песни ---
-      # Эти шаги выполняются после основного скрипта бота
+      # Эти шаги выполняются только если Run bot завершился успешно И мы в ветке main
       - name: Commit and push index file
-        # Этот шаг выполняется, только если файл current_song_index.txt существует
-        # и workflow не завершился ошибкой до этого момента
-        if: success() && steps.run.outcome == 'success' && github.ref == 'refs/heads/main'
+        # Проверяем, что предыдущий шаг run_bot_step завершился успешно и мы находимся в основной ветке
+        if: success() && steps.run_bot_step.outcome == 'success' && github.ref == 'refs/heads/main'
         run: |
+          echo "--- Committing and pushing index file ---"
+          git status # Показываем статус git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add current_song_index.txt
-          # Проверяем, есть ли изменения перед коммитом, чтобы избежать пустых коммитов
-          git diff-index --quiet HEAD || git commit -m "Bot: Update song index"
-          # Отправляем изменения обратно в репозиторий
-          git push
+          echo "Git add executed."
+          # Проверяем, есть ли изменения перед коммитом
+          if git diff-index --quiet HEAD; then
+            echo "No changes detected in current_song_index.txt. Skipping commit."
+          else
+            echo "Changes detected. Committing..."
+            git commit -m "Bot: Update song index"
+            echo "Commit created. Pushing..."
+            # Используем более явный синтаксис для push
+            git push origin HEAD:${{ github.ref }}
+            echo "Push completed."
+          fi
+          echo "--- End Commit and Push ---"
