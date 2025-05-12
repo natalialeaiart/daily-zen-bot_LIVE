@@ -8,24 +8,24 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions: # <-- Добавьте этот блок
+    permissions: # <-- Этот блок ОБЯЗАТЕЛЕН
       contents: write # <-- Явно даем права на запись в репозиторий
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        # Важно: Токен все еще нужен для actions/checkout, чтобы он склонировал репозиторий с нужными правами
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        # <-- УБРАНО: with: token: ${{ secrets.GITHUB_TOKEN }}
+        # Теперь полагаемся только на permissions: contents: write выше
 
       # --- Шаг для отладки файла индекса после checkout ---
-      # Этот шаг поможет проверить, что файл считывается корректно после клонирования репозитория
       - name: Debug index file after checkout
         run: |
           echo "--- Debug: Contents of current_song_index.txt after checkout ---"
           # Используем -f, чтобы не выводить ошибку, если файл не существует
           cat -f current_song_index.txt || echo "File does does not exist or is empty or cannot be read."
           echo "--- End Debug ---"
+        # Помечаем этот шаг как продолжающийся при ошибке, чтобы не прерывать workflow из-за проблем с чтением файла
+        continue-on-error: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -45,20 +45,22 @@ jobs:
       # --- Шаги для сохранения индекса песни ---
       # Эти шаги выполняются только если Run bot завершился успешно И мы в ветке main
       - name: Commit and push index file
-        # Проверяем, что предыдущий шаг run_bot_step завершился успешно и мы находимся в основной ветке
+        # Проверяем, что предыдущий шаг run_bot_step завершился успешно И мы находимся в основной ветке
         if: success() && steps.run_bot_step.outcome == 'success' && github.ref == 'refs/heads/main'
         run: |
           echo "--- Committing and pushing index file ---"
           git status # Показываем статус git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add current_song_index.txt
-          echo "Git add executed."
-          # Проверяем, есть ли изменения перед коммитом
-          if git diff-index --quiet HEAD; then
-            echo "No changes detected in current_song_index.txt. Skipping commit."
+          # Добавляем файл forcefully, на случай если git add сработал странно в прошлый раз
+          git add -f current_song_index.txt
+          echo "Git add -f executed."
+          # Проверяем, есть ли изменения, которые были добавлены в staging area
+          # git diff --cached --quiet --exit-code сравнивает staging area с HEAD
+          if git diff --cached --quiet --exit-code; then
+            echo "No changes detected in staging area. Skipping commit."
           else
-            echo "Changes detected. Committing..."
+            echo "Changes detected in staging area. Committing..."
             git commit -m "Bot: Update song index"
             echo "Commit created. Pushing..."
             # Используем более явный синтаксис для push
