@@ -117,7 +117,7 @@ try:
     print("Запрос генерации изображения у DALL-E 3...")
     image = client.images.generate(
         model="dall-e-3",
-        prompt=f"Symbolic concept of {theme}, artistic rendering, elegant, high detail, blend of vintage and cybernetic aesthetics",
+        prompt=f"Symbolic concept of {theme}, cinematic vertical shot, artistic rendering, elegant, high detail, blend of vintage and modern aesthetics, edge-to-edge visuals",
         n=1,
         size="1024x1792"
     )
