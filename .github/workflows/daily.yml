@@ -8,24 +8,23 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions: # <-- Этот блок ОБЯЗАТЕЛЕН
-      contents: write # <-- Явно даем права на запись в репозиторий
+    permissions:
+      contents: write # Явно даем права на запись в репозиторий
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        # <-- УБРАНО: with: token: ${{ secrets.GITHUB_TOKEN }}
-        # Теперь полагаемся только на permissions: contents: write выше
+        # Полагаемся на permissions: contents: write на уровне job
 
-      # --- Шаг для отладки файла индекса после checkout ---
-      - name: Debug index file after checkout
+      # --- Шаг для отладки индексных файлов после checkout ---
+      - name: Debug index files after checkout
         run: |
           echo "--- Debug: Contents of current_song_index.txt after checkout ---"
-          # Используем -f, чтобы не выводить ошибку, если файл не существует
-          cat -f current_song_index.txt || echo "File does does not exist or is empty or cannot be read."
+          cat -f current_song_index.txt || echo "File current_song_index.txt does not exist or is empty."
+          echo "--- Debug: Contents of current_style_index.txt after checkout ---"
+          cat -f current_style_index.txt || echo "File current_style_index.txt does not exist or is empty."
           echo "--- End Debug ---"
-        # Помечаем этот шаг как продолжающийся при ошибке, чтобы не прерывать workflow из-за проблем с чтением файла
-        continue-on-error: true
+        continue-on-error: true # Продолжаем, даже если файлы еще не существуют
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,34 +35,32 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run bot
-        id: run_bot_step # Добавляем ID шагу Run bot для использования в if условии ниже
+        id: run_bot_step # ID для ссылки на результат этого шага
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: python main.py
 
-      # --- Шаги для сохранения индекса песни ---
-      # Эти шаги выполняются только если Run bot завершился успешно И мы в ветке main
-      - name: Commit and push index file
-        # Проверяем, что предыдущий шаг run_bot_step завершился успешно И мы находимся в основной ветке
+      # --- Шаги для сохранения индексных файлов ---
+      - name: Commit and push index files
         if: success() && steps.run_bot_step.outcome == 'success' && github.ref == 'refs/heads/main'
         run: |
-          echo "--- Committing and pushing index file ---"
-          git status # Показываем статус git
+          echo "--- Committing and pushing index files ---"
+          git status
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Добавляем файл forcefully, на случай если git add сработал странно в прошлый раз
-          git add -f current_song_index.txt
-          echo "Git add -f executed."
-          # Проверяем, есть ли изменения, которые были добавлены в staging area
-          # git diff --cached --quiet --exit-code сравнивает staging area с HEAD
+          # Добавляем ОБА индексных файла с флагом -f для принудительного добавления
+          git add -f current_song_index.txt current_style_index.txt
+          echo "Git add -f executed for current_song_index.txt and current_style_index.txt."
+          
+          # Проверяем, есть ли изменения в staging area для коммита
           if git diff --cached --quiet --exit-code; then
-            echo "No changes detected in staging area. Skipping commit."
+            echo "No changes detected in staging area for index files. Skipping commit."
           else
-            echo "Changes detected in staging area. Committing..."
-            git commit -m "Bot: Update song index"
+            echo "Changes detected in staging area for index files. Committing..."
+            # Обновленное сообщение коммита
+            git commit -m "Bot: Update song and image style indexes"
             echo "Commit created. Pushing..."
-            # Используем более явный синтаксис для push
             git push origin HEAD:${{ github.ref }}
             echo "Push completed."
           fi
