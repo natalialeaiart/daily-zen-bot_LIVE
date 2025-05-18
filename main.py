@@ -20,19 +20,19 @@ INDEX_FILE = 'current_song_index.txt' # Имя файла для хранени�
 # В каждом стиле должен быть плейсхолдер {theme}, куда будет подставляться тема цитаты.
 IMAGE_PROMPT_STYLES = [
     # Стиль 1: Яркий Живой Минимализм (без упоминания телефона)
-    "Symbolic concept of {theme}: a vibrant minimalist aesthetic with lifelike elements. Clean lines, rich, harmonious colors, elegant vertical composition, full bleed, high detail, inspiring, 9:16 aspect ratio.",
+    "Symbolic concept of {theme}: a vibrant minimalist aesthetic with lifelike elements. Clean lines, rich, harmonious colors, elegant vertical composition, full bleed, high detail, inspiring, 9:16 aspect ratio. Purely visual, no text elements.",
     
     # Стиль 2: Эстетичный Фотореализм (без упоминания телефона)
-    "Symbolic concept of {theme}: photorealistic style infused with an artistic, aesthetic touch. Bright, natural lighting, vivid and appealing colors, perhaps a subtle touch of wonder, tall vertical image, highly detailed, immersive, 9:16 aspect ratio.",
+    "Symbolic concept of {theme}: photorealistic style infused with an artistic, aesthetic touch. Bright, natural lighting, vivid and appealing colors, perhaps a subtle touch of wonder, tall vertical image, highly detailed, immersive, 9:16 aspect ratio.Purely visual, no text elements.",
     
     # Стиль 3: Современная Красочная Иллюстрация (без упоминания телефона)
-    "Symbolic concept of {theme}: modern aesthetic illustration, featuring a bold and beautiful color palette. Clean, contemporary design, an uplifting and lifelike feel, distinct vertical format, edge-to-edge clarity, 9:16 aspect ratio.",
+    "Symbolic concept of {theme}: modern aesthetic illustration, featuring a bold and beautiful color palette. Clean, contemporary design, an uplifting and lifelike feel, distinct vertical format, edge-to-edge clarity, 9:16 aspect ratio.Purely visual, no text elements.",
     
     # Стиль 4: Органический и Безмятежный Минимализм (без упоминания телефона)
-    "Symbolic concept of {theme}: serene and colorful aesthetic, blending elegant minimalism with organic, lifelike forms. Soft, diffused lighting creating a gentle mood, beautiful color gradients, elegant tall vertical design, high detail, 9:16 aspect ratio.",
+    "Symbolic concept of {theme}: serene and colorful aesthetic, blending elegant minimalism with organic, lifelike forms. Soft, diffused lighting creating a gentle mood, beautiful color gradients, elegant tall vertical design, high detail, 9:16 aspect ratio.Purely visual, no text elements.",
     
     # Стиль 5: Художественная и Реалистичная Иллюстрация (без упоминания телефона)
-    "Symbolic concept of {theme}: a beautifully illustrated vertical scene, realistic yet imbued with a touch of artistic flair and wonder. Rich, vibrant, and lifelike colors, clear focus on the theme, minimalist yet meaningful background elements, highly detailed, 9:16 aspect ratio."
+    "Symbolic concept of {theme}: a beautifully illustrated vertical scene, realistic yet imbued with a touch of artistic flair and wonder. Rich, vibrant, and lifelike colors, clear focus on the theme, minimalist yet meaningful background elements, highly detailed, 9:16 aspect ratio.Purely visual, no text elements."
 ]
 
 # Файл для индекса текущего стиля
