@@ -98,42 +98,35 @@ def write_current_index(filename, index):
 print("Начало выполнения скрипта.")
 
 # 1. Жёсткий промпт для цитаты
-# ... (ваш код для шага 1 остается без изменений) ...
 prompt = (
     "Сгенерируй одну мудрую цитату дня от известного человека, писателя, философа, героя книги, фильма и т.д. Важно, чтоб цитата была позитивной, вдохновляющей, мудрой и/или с юмором. "
-    "Сначала напиши её на английском языке, затем переведи на русский. "
+    "Цитата должна быть только на русском языке. "
     "Строго в следующем формате:\n\n"
-    "\"Английская цитата\" — Автор\n\"Русская цитата\" — Автор"
+    "\"Русская цитата\" — Автор"
 )
-print("Запрос цитаты у GPT-4o...")
+print("Запрос цитаты у GPT-4o mini...")
 try:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}]
     )
     # 2. Разбор цитаты
-    # ... (ваш код для шага 2 остается без изменений) ...
     text = response.choices[0].message.content.strip()
-    lines = [line for line in text.split("\n") if line.strip()]
-    english = lines[0].strip('"') if len(lines) >= 1 else ""
-    russian = lines[1].strip('"') if len(lines) >= 2 else ""
     print("Цитата сгенерирована и разобрана.")
     
     # 3. Финальное сообщение для цитаты
-    # ... (ваш код для шага 3 остается без изменений) ...
-    quote_text = f"Quote of the day:\n\n{english}\n\nЦитата дня:\n\n{russian}" if english and russian else english or text
+    quote_text = f"Цитата дня:\n\n{text}"
     print(f"Финальный текст цитаты готов:\n---\n{quote_text}\n---")
 
     # 4. Извлечение темы для изображения
-    # ... (ваш код для шага 4 остается без изменений) ...
     print("Извлечение темы цитаты для изображения...")
     theme_response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
                 "content": (
-                    f"Вот цитата:\n\n{english}\n\n"
+                    f"Вот цитата:\n\n{text}\n\n"
                     "Определи её главную тему одним словом или фразой (на английском)."
                 )
             }
@@ -186,7 +179,6 @@ except Exception as e:
 
 
 # --- 7. Подготовка и отправка второго поста (Песня дня) ---
-# ... (ваш код для шага 7 остается без изменений, как в предыдущих версиях) ...
 print("\n--- Начинаем подготовку к отправке 'Песни дня' ---")
 
 youtube_songs = read_song_list(SONGS_FILE) # Функция read_song_list теперь более универсальна
