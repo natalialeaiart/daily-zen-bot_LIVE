@@ -107,7 +107,7 @@ selected_style_template = IMAGE_PROMPT_STYLES[next_style_idx]
 image_prompt = selected_style_template.replace("{theme}", theme)
 
 output = replicate_client.run(
-    "stability-ai/sdxl:db21e45a21c8db4203a38c7dd06c356e3f5b1f4cb2436f75cd4475c9527f3d02",
+    "stability-ai/sdxl",  # новая актуальная версия без указания конкретного хэша
     input={
         "prompt": image_prompt,
         "width": 1024,
