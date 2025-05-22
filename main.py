@@ -98,22 +98,63 @@ def write_current_index(filename, index):
 print("Начало выполнения скрипта.")
 
 # 1. Жёсткий промпт для цитаты
+import random
+import os
+
+# --- Константы и список тем ---
+THOUGHT_CATEGORIES = [
+    "философия",
+    "юмор жизни",
+    "самопознание",
+    "минимализм",
+    "психология",
+    "осознанность",
+    "бизнес",
+    "творчество",
+    "критическое мышление",
+    "мотивация",
+    "эмоциональный интеллект",
+    "лидерство"
+]
+LAST_TOPIC_FILE = "last_topic.txt"
+
+# --- Определение последней темы ---
+last_topic = None
+if os.path.exists(LAST_TOPIC_FILE):
+    with open(LAST_TOPIC_FILE, 'r', encoding='utf-8') as f:
+        last_topic = f.read().strip()
+
+# --- Выбор новой темы, исключая последнюю ---
+available_topics = [t for t in THOUGHT_CATEGORIES if t != last_topic]
+selected_category = random.choice(available_topics)
+
+# --- Сохраняем выбранную тему ---
+with open(LAST_TOPIC_FILE, 'w', encoding='utf-8') as f:
+    f.write(selected_category)
+
+# --- Промт для генерации мысли ---
 prompt = (
-    "Сгенерируй одну мудрую цитату дня от известного человека, писателя, философа, героя книги, фильма и т.д. Важно, чтоб цитата была позитивной, вдохновляющей, мудрой и/или с юмором. "
-    "Цитата должна быть только на русском языке. "
-    "Строго в следующем формате:\n\n"
-    "\"Русская цитата\" — Автор"
+    f"Сгенерируй одну мудрую, вдохновляющую или философскую мысль на русском языке, "
+    f"основанную на идеях из книги, курса, фильма, статьи или интервью по теме «{selected_category}». "
+    "Это не должна быть цитата, а краткая мысль в духе источника. "
+    "В конце обязательно укажи источник (в скобках). "
+    "Формат ответа — только текст одной строки. Без вступлений и пояснений.\n\n"
+    "Примеры:\n"
+    "— Хаос — нормальное состояние роста. (Антихрупкость, Нассим Талеб)\n"
+    "— Смелость — это не отсутствие страха, а готовность идти с ним за руку. (Большое волшебство, Элизабет Гилберт)"
 )
-print("Запрос цитаты у GPT-4o mini...")
-try:
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    # 2. Разбор цитаты
-    text = response.choices[0].message.content.strip()
-    print("Цитата сгенерирована и разобрана.")
-    
+
+print(f"Запрос мудрой мысли по теме: {selected_category}")
+
+# --- Запрос к GPT ---
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": prompt}]
+)
+text = response.choices[0].message.content.strip()
+quote_text = f"Мысль дня ({selected_category}):\n\n{text}"
+print(f"Финальный текст мысли:\n---\n{quote_text}\n---")
+
     # 3. Финальное сообщение для цитаты
     quote_text = f"Цитата дня:\n\n{text}"
     print(f"Финальный текст цитаты готов:\n---\n{quote_text}\n---")
