@@ -1,6 +1,7 @@
 import os
 import telegram
 import random
+import replicate
 from openai import OpenAI
 
 # --- Настройки API и канала ---
@@ -10,6 +11,7 @@ chat_id = "@dailyzendose"
 
 client = OpenAI(api_key=openai_api_key)
 bot = telegram.Bot(token=telegram_token)
+replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 # --- Настройки для Песни дня ---
 SONGS_FILE = 'youtube_songs.txt'
@@ -76,7 +78,7 @@ with open(LAST_TOPIC_FILE, 'w', encoding='utf-8') as f:
 
 prompt = (
     f"Сгенерируй одну мудрую, вдохновляющую или философскую мысль на русском языке, "
-    f"основанную на идеях из реальной книги, курса, фильма, статьи или интервью по теме «{selected_category}». "
+    f"основанную на идеях из книги, курса, фильма, статьи или интервью по теме «{selected_category}». "
     "Это не должна быть цитата, а краткая мысль в духе источника. "
     "В конце обязательно укажи источник (в скобках). "
     "Формат ответа — только текст одной строки. Без вступлений и пояснений."
@@ -89,7 +91,7 @@ response = client.chat.completions.create(
 text = response.choices[0].message.content.strip()
 quote_text = f"Мысль дня ({selected_category}):\n\n{text}"
 
-# --- Определение темы и генерация изображения ---
+# --- Определение темы и генерация изображения через Replicate ---
 theme_response = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": f"Вот цитата:\n\n{text}\n\nОпредели её главную тему одним словом или фразой (на английском)."}]
@@ -104,13 +106,17 @@ if next_style_idx >= len(IMAGE_PROMPT_STYLES):
 selected_style_template = IMAGE_PROMPT_STYLES[next_style_idx]
 image_prompt = selected_style_template.replace("{theme}", theme)
 
-image = client.images.generate(
-    model="dall-e-3",
-    prompt=image_prompt,
-    n=1,
-    size="1024x1792"
+output = replicate_client.run(
+    "stability-ai/sdxl:db21e45a21c8db4203a38c7dd06c356e3f5b1f4cb2436f75cd4475c9527f3d02",
+    input={
+        "prompt": image_prompt,
+        "width": 1024,
+        "height": 1792,
+        "num_inference_steps": 30,
+        "guidance_scale": 7.5
+    }
 )
-image_url = image.data[0].url
+image_url = output[0]
 write_current_index(CURRENT_STYLE_INDEX_FILE, next_style_idx)
 
 bot.send_photo(chat_id=chat_id, photo=image_url, caption=quote_text)
