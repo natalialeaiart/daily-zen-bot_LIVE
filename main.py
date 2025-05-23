@@ -71,6 +71,8 @@ if os.path.exists(LAST_TOPIC_FILE):
         last_topic = f.read().strip()
 
 available_topics = [t for t in THOUGHT_CATEGORIES if t != last_topic]
+if not available_topics: # Fallback if all topics have been used recently (or only one topic exists)
+    available_topics = THOUGHT_CATEGORIES
 selected_category = random.choice(available_topics)
 
 with open(LAST_TOPIC_FILE, 'w', encoding='utf-8') as f:
@@ -107,7 +109,7 @@ selected_style_template = IMAGE_PROMPT_STYLES[next_style_idx]
 image_prompt = selected_style_template.replace("{theme}", theme)
 
 output = replicate_client.run(
-    "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",  # новая актуальная версия без указания конкретного хэша
+    "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",
     input={
         "prompt": image_prompt,
         "width": 1024,
@@ -120,6 +122,7 @@ image_url = output[0]
 write_current_index(CURRENT_STYLE_INDEX_FILE, next_style_idx)
 
 bot.send_photo(chat_id=chat_id, photo=image_url, caption=quote_text)
+print(f"Мысль дня и изображение по теме '{selected_category}' отправлены.")
 
 # --- Песня дня ---
 youtube_songs = read_song_list(SONGS_FILE)
@@ -132,5 +135,33 @@ if youtube_songs:
     song_url = youtube_songs[next_song_idx]
     bot.send_message(chat_id=chat_id, text=f"Song Of The Day - Песня Дня 🎧🌟\n\n{song_url}")
     write_current_index(INDEX_FILE, next_song_idx)
+    print("Песня дня отправлена.")
+else:
+    print("Список песен пуст или не найден. Песня дня не отправлена.")
+
+# --- Генерация задания дня по теме ---
+print(f"Генерация задания дня по теме: {selected_category}")
+task_prompt = (
+    f"Придумай небольшое, но полезное задание на сегодня по теме «{selected_category}». "
+    "Оно должно быть лёгким, выполнимым и интересным. Формат:\n"
+    "— Сначала само задание.\n"
+    "— Затем короткое объяснение, зачем оно.\n"
+    "— В конце добавь призыв к действию, который логично соответствует заданию (например, предложи делиться своими результатами, наблюдениями, фото, словами, инсайтами или впечатлениями в комментариях).\n"
+    "Не используй списки. Пиши вдохновляюще.\n\n"
+    "Пример:\n"
+    "— Замечай сегодня всё красное. Если хочешь — фотографируй или делись в комментариях. Это помогает развить насмотренность.\n\n"
+    "Сформулируй одно уникальное задание в этом стиле:"
+)
+
+task_response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": task_prompt}]
+)
+generated_task_text = task_response.choices[0].message.content.strip()
+
+task_post_text = f"Задание дня ({selected_category}):\n\n{generated_task_text}"
+
+bot.send_message(chat_id=chat_id, text=task_post_text)
+print("Задание дня отправлено.")
 
 print("Скрипт завершён.")
