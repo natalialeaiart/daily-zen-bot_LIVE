@@ -1,9 +1,9 @@
 name: Post Daily Zen Quote and Song
 
 on:
-  schedule:
-    - cron: '0 5 * * *' # 08:00 по Риге (GMT+3) = 05:00 UTC
-  workflow_dispatch: # Позволяет запускать вручную из интерфейса GitHub Actions
+  #schedule:
+    #- cron: '0 5 * * *' # 08:00 по Риге (GMT+3) = 05:00 UTC
+  #workflow_dispatch: # Позволяет запускать вручную из интерфейса GitHub Actions
 
 jobs:
   run:
